@@ -1,14 +1,24 @@
+import sqlite3
 import face_recognition
 import numpy as np
-import sys
 import os
 
-image_path = sys.argv[1]
-name = sys.argv[2]
+def generate_all_embeddings():
+    conn = sqlite3.connect("db/students.db")
+    c = conn.cursor()
+    c.execute('SELECT name, image_path FROM students')
+    students = c.fetchall()
+    for name, image_path in students:
+        if os.path.exists(image_path):
+            image = face_recognition.load_image_file(image_path)
+            encodings = face_recognition.face_encodings(image)
+            if encodings:
+                np.save(f"embeddings/{name}.npy", encodings[0])
+                print(f"✅ Embedding créé pour {name}")
+            else:
+                print(f"⚠️ Aucun visage trouvé pour {name}")
+        else:
+            print(f"❌ Fichier manquant : {image_path}")
+    conn.close()
 
-image = face_recognition.load_image_file(image_path)
-encoding = face_recognition.face_encodings(image)[0]
-
-os.makedirs("embeddings", exist_ok=True)
-np.save(f"embeddings/{name}.npy", encoding)
-print(f"Embedding saved for {name}")
+generate_all_embeddings()
