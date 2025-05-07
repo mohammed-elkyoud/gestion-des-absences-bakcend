@@ -2,8 +2,17 @@ from flask import Flask, request, jsonify
 import face_recognition
 import numpy as np
 import os
-
+from db.database import init_db
+from routes.professors import bp as profs_bp
+from routes.classes import bp as classes_bp
+from routes.students import bp as students_bp
 app = Flask(__name__)
+
+init_db()
+
+app.register_blueprint(profs_bp)
+app.register_blueprint(classes_bp)
+app.register_blueprint(students_bp)
 
 # Charger les embeddings
 known_encodings = []
