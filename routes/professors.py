@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from db.database import get_db_connection
 import bcrypt
+from auth.jwt_utils import generate_token, token_required
 
 bp = Blueprint('professors', __name__)
 
@@ -43,8 +44,14 @@ def signin():
     conn.close()
 
     if prof and bcrypt.checkpw(password, prof['password']):
+        token = generate_token({
+            'id': prof['id'],
+            'gmailAcademique': prof['gmailAcademique'],
+            'role': prof['role']
+        })
         return jsonify({
             'message': 'Login successful',
+            'token': token,
             'professor': {
                 'id': prof['id'],
                 'firstName': prof['firstName'],
@@ -56,23 +63,39 @@ def signin():
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
 
-# GET ALL PROFESSORS
+# GET ALL PROFESSORS (protected)
 @bp.route('/professors', methods=['GET'])
-def get_all():
+@token_required
+def get_all(current_user):
+    if current_user['role'] != 'admin':
+        return jsonify({'error': 'Access denied'}), 403
+
     conn = get_db_connection()
     profs = conn.execute('SELECT * FROM professors').fetchall()
     conn.close()
     return jsonify([dict(p) for p in profs])
 
-# UPDATE PROFESSOR (admin only)
-@bp.route('/professors/<int:id>', methods=['PUT'])
-def update(id):
-    data = request.json
+# GET SINGLE PROFESSOR (protected)
+@bp.route('/professors/<int:id>', methods=['GET'])
+@token_required
+def get_professor(id, current_user):
+    conn = get_db_connection()
+    prof = conn.execute('SELECT * FROM professors WHERE id = ?', (id,)).fetchone()
+    conn.close()
+    
+    if prof:
+        return jsonify(dict(prof))
+    else:
+        return jsonify({'error': 'Professor not found'}), 404
 
-    # Optional: simulate admin check
-    if data.get('role') != 'admin':
+# UPDATE PROFESSOR (admin only, protected)
+@bp.route('/professors/<int:id>', methods=['PUT'])
+@token_required
+def update(id, current_user):
+    if current_user['role'] != 'admin':
         return jsonify({'error': 'Unauthorized – admin only'}), 403
 
+    data = request.json
     conn = get_db_connection()
     conn.execute('''
         UPDATE professors SET firstName=?, lastName=?, matiere=?, gmailAcademique=?, classes=?, password=?, role=?
@@ -92,11 +115,11 @@ def update(id):
 
     return jsonify({'message': 'Professor updated'})
 
-# DELETE PROFESSOR (admin only)
+# DELETE PROFESSOR (admin only, protected)
 @bp.route('/professors/<int:id>', methods=['DELETE'])
-def delete(id):
-    data = request.json
-    if data.get('role') != 'admin':
+@token_required
+def delete(id, current_user):
+    if current_user['role'] != 'admin':
         return jsonify({'error': 'Unauthorized – admin only'}), 403
 
     conn = get_db_connection()

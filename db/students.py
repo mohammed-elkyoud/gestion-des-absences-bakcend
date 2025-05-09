@@ -40,7 +40,3 @@ def insert_student(name, image_path, classe):
 # Crée la base de données (table) si elle n'existe pas déjà
 create_db()
 
-# Ajoute des étudiants
-insert_student('cr7', 'known_faces/cr7.jpg', 'TI1')
-insert_student('bale', 'known_faces/bale.jpg', 'TI1')
-insert_student('benzima', 'known_faces/benzima.jpg', 'TI1')
