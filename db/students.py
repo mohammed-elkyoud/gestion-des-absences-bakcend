@@ -39,4 +39,3 @@ def insert_student(name, image_path, classe):
 
 # Crée la base de données (table) si elle n'existe pas déjà
 create_db()
-

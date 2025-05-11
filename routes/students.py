@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from db.students import get_db_connection
+from auth.jwt_utils import token_required  # Import the token_required decorator
 
 bp = Blueprint('students', __name__)
 
@@ -37,3 +38,21 @@ def delete_student(id):
     conn.commit()
     conn.close()
     return jsonify({'message': 'Étudiant supprimé'})
+
+# GET COUNT OF STUDENTS (admin only, protected)
+@bp.route('/students/count', methods=['GET'])
+@token_required  # Protect this endpoint
+def get_student_count(current_user):
+    if current_user['role'] != 'admin':  # Check if the user is an admin
+        return jsonify({'error': 'Access denied'}), 403
+
+    conn = get_db_connection()
+    
+    # Count total students
+    student_count = conn.execute('SELECT COUNT(*) FROM students').fetchone()[0]
+    
+    conn.close()
+    
+    return jsonify({
+        'student_count': student_count
+    })
