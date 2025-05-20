@@ -6,7 +6,11 @@ from db.database import init_db
 from routes.professors import bp as profs_bp
 from routes.classes import bp as classes_bp
 from routes.students import bp as students_bp
+from flask_cors import CORS
+
 app = Flask(__name__)
+
+CORS(app)
 
 init_db()
 
@@ -14,7 +18,7 @@ app.register_blueprint(profs_bp)
 app.register_blueprint(classes_bp)
 app.register_blueprint(students_bp)
 
-# Charger les embeddings
+# Charger les embedding
 known_encodings = []
 known_names = []
 

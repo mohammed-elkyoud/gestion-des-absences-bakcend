@@ -39,6 +39,15 @@ def delete_student(id):
     conn.close()
     return jsonify({'message': 'Étudiant supprimé'})
 
+@bp.route('/students', methods=['DELETE'])
+def delete_all_students():
+    conn = get_db_connection()
+    conn.execute('DELETE FROM students')
+    conn.commit()
+    conn.close()
+    
+    return jsonify({'message': 'All students deleted'})
+
 # GET COUNT OF STUDENTS (admin only, protected)
 @bp.route('/students/count', methods=['GET'])
 @token_required  # Protect this endpoint
